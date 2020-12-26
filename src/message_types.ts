@@ -7,3 +7,7 @@ interface AddStreamMessage {
 interface CheckStreamMessage {
     stream_id: string
 }
+
+interface RemoveStreamMessage {
+    stream_id: string
+}
