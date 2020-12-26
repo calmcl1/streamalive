@@ -4,7 +4,7 @@ import AMQP from 'amqplib'
 import dotenv from 'dotenv'
 import { initDB, models } from '../db'
 import { shouldUseDotEnv } from '../helpers'
-import { STREAM_CHECK_TASK_QUEUE } from '../queues'
+import { REMOVE_STREAM_QUEUE, STREAM_CHECK_TASK_QUEUE } from '../queues'
 
 if (shouldUseDotEnv()) {
     console.log("Using dotenv file...")
@@ -40,7 +40,13 @@ async function onCheckStreamMessage(message: AMQP.ConsumeMessage | null) {
 
     const parsedMessage: CheckStreamMessage = JSON.parse(message.content.toString())
     const stream = await models.Stream.findByPk(parsedMessage.stream_id)
-    if (!stream) { throw new Error("the stream doesn't exist") }
+    if (!stream) {
+        // The stream doesn't exist, we should mark it for deletion
+        console.warn(`Stream ${parsedMessage.stream_id} doesn't exist, marking for deletion`)
+        const msg: RemoveStreamMessage = { stream_id: parsedMessage.stream_id }
+        chan.sendToQueue(REMOVE_STREAM_QUEUE, Buffer.from(JSON.stringify(msg)))
+        return
+    }
     lambda.send(
         new InvokeCommand({
             FunctionName: "pollAudioStream",
