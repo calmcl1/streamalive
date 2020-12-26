@@ -38,30 +38,35 @@ async function initQueues() {
 async function onCheckStreamMessage(message: AMQP.ConsumeMessage | null) {
     if (message == null) { return }
 
-    const parsedMessage: CheckStreamMessage = JSON.parse(message.content.toString())
-    const stream = await models.Stream.findByPk(parsedMessage.stream_id)
-    if (!stream) {
-        // The stream doesn't exist, we should mark it for deletion
-        console.warn(`Stream ${parsedMessage.stream_id} doesn't exist, marking for deletion`)
-        const msg: RemoveStreamMessage = { stream_id: parsedMessage.stream_id }
-        chan.sendToQueue(REMOVE_STREAM_QUEUE, Buffer.from(JSON.stringify(msg)))
-        return
-    }
+    try {
+        const parsedMessage: CheckStreamMessage = JSON.parse(message.content.toString())
+        const stream = await models.Stream.findByPk(parsedMessage.stream_id)
+        if (!stream) {
+            // The stream doesn't exist, we should mark it for deletion
+            console.warn(`Stream ${parsedMessage.stream_id} doesn't exist, marking for deletion`)
+            const msg: RemoveStreamMessage = { stream_id: parsedMessage.stream_id }
+            chan.sendToQueue(REMOVE_STREAM_QUEUE, Buffer.from(JSON.stringify(msg)))
+            return
+        }
 
-    lambda.send(
-        new InvokeCommand({
-            FunctionName: "pollAudioStream",
-            Payload: Buffer.from(JSON.stringify({
-                "stream_url": stream.url
-            }))
-        }), (err, data) => {
-            if (err) { console.error(err) }
-            else if (data) {
-                const resp: PollAudioStreamReturn = JSON.parse(JSON.parse(Buffer.from(data.Payload!).toString('utf-8')))
-                console.log(`${stream.id}: ${resp.status_code}`)
-            }
-        })
-    chan.ack(message)
+        lambda.send(
+            new InvokeCommand({
+                FunctionName: "pollAudioStream",
+                Payload: Buffer.from(JSON.stringify({
+                    "stream_url": stream.url
+                }))
+            }), (err, data) => {
+                if (err) { console.error(err) }
+                else if (data) {
+                    const resp: PollAudioStreamReturn = JSON.parse(JSON.parse(Buffer.from(data.Payload!).toString('utf-8')))
+                    console.log(`${stream.id}: ${resp.status_code}`)
+                }
+            })
+    } catch (e) {
+        console.error(e)
+    } finally {
+        chan.ack(message)
+    }
 }
 
 initDB()
