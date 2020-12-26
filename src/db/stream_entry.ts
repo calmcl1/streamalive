@@ -1,4 +1,5 @@
-import { Model, DataTypes, Sequelize } from "sequelize"
+import { Model, DataTypes, Sequelize, BelongsToCreateAssociationMixin, BelongsToGetAssociationMixin, BelongsToSetAssociationMixin } from "sequelize"
+import { User } from "./user"
 
 export interface StreamAttributes {
     id: string,
@@ -15,6 +16,11 @@ export class Stream extends Model implements StreamAttributes {
     public user_id!: string
     public url!: string
     public check_frequency!: "EVERY_HOUR" | "EVERY_MINUTE"
+
+
+    public CreateUser!: BelongsToCreateAssociationMixin<User>
+    public GetUser!: BelongsToGetAssociationMixin<User>
+    public SetUser!: BelongsToSetAssociationMixin<User, User['id']>
 
     public static initModel(sequelize: Sequelize): Model<Stream, {}> {
         return this.init({
