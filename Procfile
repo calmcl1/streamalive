@@ -1,2 +1,2 @@
-clock: node dist/scheduler/scheduler.js
-worker: node dist/worker/worker.js
+clock: npm run-script start-clock
+worker: npm run-script start-worker
