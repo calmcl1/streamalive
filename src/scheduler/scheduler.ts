@@ -2,14 +2,14 @@ import AMQP from 'amqplib'
 import dotenv from 'dotenv'
 import schedule from 'node-schedule'
 import { initDB, models } from '../db'
+import { shouldUseDotEnv } from '../helpers'
 import { ADD_STREAM_QUEUE, STREAM_CHECK_TASK_QUEUE } from '../queues'
 
-
-if (process.env.NODE_ENV == "production") {
-    console.log("Not using dotenv file...")
-} else {
+if (shouldUseDotEnv()) {
     console.log("Using dotenv file...")
     dotenv.config({ path: "'../../.env" })
+} else {
+    console.log("Not using dotenv file...")
 }
 
 const AMQP_SERVER = process.env.CLOUDAMQP_URL || process.env.RABBITMQ_URL || "amqp://localhost/streamalive"

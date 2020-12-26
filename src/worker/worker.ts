@@ -3,13 +3,14 @@ import { defaultProvider } from '@aws-sdk/credential-provider-node'
 import AMQP from 'amqplib'
 import dotenv from 'dotenv'
 import { initDB, models } from '../db'
+import { shouldUseDotEnv } from '../helpers'
 import { STREAM_CHECK_TASK_QUEUE } from '../queues'
 
-if (process.env.NODE_ENV == "production") {
-    console.log("Not using dotenv file...")
-} else {
+if (shouldUseDotEnv()) {
     console.log("Using dotenv file...")
     dotenv.config({ path: "'../../.env" })
+} else {
+    console.log("Not using dotenv file...")
 }
 
 interface PollAudioStreamReturn {
