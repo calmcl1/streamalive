@@ -47,6 +47,7 @@ async function onCheckStreamMessage(message: AMQP.ConsumeMessage | null) {
         chan.sendToQueue(REMOVE_STREAM_QUEUE, Buffer.from(JSON.stringify(msg)))
         return
     }
+
     lambda.send(
         new InvokeCommand({
             FunctionName: "pollAudioStream",

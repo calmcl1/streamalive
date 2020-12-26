@@ -35,16 +35,25 @@ async function initQueues() {
 async function onAddStreamMessage(message: AMQP.ConsumeMessage | null) {
     if (message == null) { return }
 
-    const parsed_message: AddStreamMessage = JSON.parse(message.content.toString("utf-8"))
-    const new_stream = await models.Stream.create({ user_id: parsed_message.user_id, url: parsed_message.stream_url, check_frequency: parsed_message.check_frequency })
-    addJobToList(new_stream.id, scheduleRules.EVERY_MINUTE)
-    chan.ack(message)
+    try {
+        const parsed_message: AddStreamMessage = JSON.parse(message.content.toString("utf-8"))
+        console.info(`Adding new stream: ${parsed_message.stream_url}`)
+        const new_stream = await models.Stream.create({ user_id: parsed_message.user_id, url: parsed_message.stream_url, check_frequency: parsed_message.check_frequency })
+        addJobToList(new_stream.id, scheduleRules.EVERY_MINUTE)
+    } catch (e) {
+        console.error(e)
+    } finally {
+        chan.ack(message)
+    }
+
+
 }
 
 async function onRemoveStreamMessage(message: AMQP.ConsumeMessage | null) {
     if (message == null) { return }
 
     const parsed_message: RemoveStreamMessage = JSON.parse(message.content.toString("utf-8"))
+    console.info(`Removing stream ${parsed_message.stream_id}`)
     const stream = await models.Stream.findByPk(parsed_message.stream_id)
     if (stream) { stream.destroy() }
     if (jobs[parsed_message.stream_id]) {
