@@ -46,7 +46,7 @@ async function onAddStreamMessage(message: AMQP.ConsumeMessage | null) {
     if (message == null) { return }
 
     const parsed_message: AddStreamMessage = JSON.parse(message.content.toString("utf-8"))
-    const new_stream = await models.Stream.create({ user_id: parsed_message.user_id, url: parsed_message.stream_url })
+    const new_stream = await models.Stream.create({ user_id: parsed_message.user_id, url: parsed_message.stream_url, check_frequency: parsed_message.check_frequency })
     addJobToList(new_stream.id, scheduleRules.EVERY_MINUTE)
     chan.ack(message)
 }

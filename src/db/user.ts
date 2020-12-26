@@ -34,7 +34,6 @@ export class User extends Model implements User {
             id: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
             first_name: { type: DataTypes.STRING, allowNull: false },
             last_name: { type: DataTypes.STRING, allowNull: false },
-            check_frequency: { type: DataTypes.ENUM, values: ["EVERY_HOUR", "EVERY_MINUTE"], allowNull: false }
         }, {
             sequelize: sequelize,
             tableName: "users"
