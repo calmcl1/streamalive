@@ -26,6 +26,7 @@ const lambda = new LambdaClient({ region: "eu-west-1", credentials: defaultProvi
 async function initQueues() {
     chan = await AMQP.connect(AMQP_SERVER)
         .then(conn => conn.createChannel())
+    chan.prefetch(2)
 
     await Promise.all([
         chan.assertQueue(STREAM_CHECK_TASK_QUEUE, {

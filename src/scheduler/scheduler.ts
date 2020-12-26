@@ -28,6 +28,7 @@ const scheduleRules = {
 async function initQueues() {
     chan = await AMQP.connect(AMQP_SERVER)
         .then(conn => conn.createChannel())
+    chan.prefetch(2)
 
     await Promise.all([STREAM_CHECK_TASK_QUEUE, ADD_STREAM_QUEUE, REMOVE_STREAM_QUEUE].map(q => chan.assertQueue(q, { durable: true, exclusive: false })))
 }
@@ -52,15 +53,21 @@ async function onAddStreamMessage(message: AMQP.ConsumeMessage | null) {
 async function onRemoveStreamMessage(message: AMQP.ConsumeMessage | null) {
     if (message == null) { return }
 
-    const parsed_message: RemoveStreamMessage = JSON.parse(message.content.toString("utf-8"))
-    console.info(`Removing stream ${parsed_message.stream_id}`)
-    const stream = await models.Stream.findByPk(parsed_message.stream_id)
-    if (stream) { stream.destroy() }
-    if (jobs[parsed_message.stream_id]) {
-        jobs[parsed_message.stream_id]?.cancel(false)
-        delete jobs[parsed_message.stream_id]
+    try {
+        const parsed_message: RemoveStreamMessage = JSON.parse(message.content.toString("utf-8"))
+        console.info(`Removing stream ${parsed_message.stream_id}`)
+
+        const stream = await models.Stream.findByPk(parsed_message.stream_id)
+        if (stream) { stream.destroy() }
+        if (jobs[parsed_message.stream_id]) {
+            jobs[parsed_message.stream_id]?.cancel(false)
+            delete jobs[parsed_message.stream_id]
+        }
+    } catch (e) {
+        console.error(e)
+    } finally {
+        chan.ack(message)
     }
-    chan.ack(message)
 }
 
 function addJobToList(stream_id: string, schedule_rule: schedule.RecurrenceRule) {
