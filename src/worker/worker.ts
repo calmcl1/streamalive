@@ -12,13 +12,6 @@ import { defaultProvider } from '@aws-sdk/credential-provider-node'
 import AMQP from 'amqplib'
 import { initDB, models } from '../db'
 import { createStreamCheckEventProducer, TOPIC_NAME_STREAM_CHECK_EVENT } from '../db/kafka'
-import { REMOVE_STREAM_QUEUE, STREAM_CHECK_TASK_QUEUE } from '../queues'
-
-interface PollAudioStreamReturn {
-    status_code: number
-    body: string
-    stream_url: string
-}
 
 let messageQueueChan: AMQP.Channel
 let kafkaProd: ReturnType<typeof createStreamCheckEventProducer>
@@ -32,12 +25,12 @@ async function initQueues() {
         .then(conn => conn.createChannel())
     messageQueueChan.prefetch(2)
 
-    await Promise.all([
-        messageQueueChan.assertQueue(STREAM_CHECK_TASK_QUEUE, {
+    await Promise.all([process.env.MQ_CHECK_STREAM_QUEUE_NAME!, process.env.MQ_REMOVE_STREAM_QUEUE_NAME!]
+        .map(q => messageQueueChan.assertQueue(q, {
             durable: true,
             exclusive: false
-        }),
-    ])
+        })
+        ))
 }
 
 async function initKafka() {
@@ -63,7 +56,7 @@ async function onCheckStreamMessage(message: AMQP.ConsumeMessage | null) {
             // The stream doesn't exist, we should mark it for deletion
             console.warn(`Stream ${parsedMessage.stream_id} doesn't exist, marking for deletion`)
             const msg: RemoveStreamMessage = { stream_id: parsedMessage.stream_id, reason: "ID_NOT_FOUND" }
-            messageQueueChan.sendToQueue(REMOVE_STREAM_QUEUE, Buffer.from(JSON.stringify(msg)))
+            messageQueueChan.sendToQueue(process.env.MQ_REMOVE_STREAM_QUEUE_NAME!, Buffer.from(JSON.stringify(msg)))
             return
         }
 
@@ -98,5 +91,5 @@ initDB()
     .then(initKafka)
     .then(() => {
         console.info("DB and message queues set, beginning event consume")
-        messageQueueChan.consume(STREAM_CHECK_TASK_QUEUE, onCheckStreamMessage, { noAck: false })
+        messageQueueChan.consume(process.env.MQ_CHECK_STREAM_QUEUE_NAME!, onCheckStreamMessage, { noAck: false })
     })

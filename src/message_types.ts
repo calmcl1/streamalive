@@ -12,3 +12,9 @@ interface RemoveStreamMessage {
     stream_id: string
     reason: "ID_NOT_FOUND" | "USER_REQUEST"
 }
+
+interface PollAudioStreamReturn {
+    status_code: number
+    body: string
+    stream_url: string
+}

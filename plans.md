@@ -1,0 +1,28 @@
+# Plans
+- Free
+    - 1 stream
+    - Hourly check
+    - 1 month retention
+    - Email notifications
+    - £0/mo
+- Basic
+    - 3 streams
+    - Per-minute check
+    - 6 month retention
+    - Email notifications
+    - API access
+    - £5/mo
+- Pro
+    - 5 streams
+    - Per-minute check
+    - 1 year retention
+    - Email, phone notifications
+    - API access
+    - £9/mo
+- Super
+    - Unlimited streams
+    - Continuous check
+    - Unlimited retention
+    - Email, phone notifications
+    - API access
+    - £13/mo

@@ -1,4 +1,3 @@
-import { CodeSigningPolicies } from '@aws-sdk/client-lambda'
 import Kafka from 'node-rdkafka'
 
 const kafkaConfig: Kafka.ProducerGlobalConfig = {
@@ -17,5 +16,9 @@ export const createStreamCheckEventProducer = () => {
     const p = new Kafka.Producer(kafkaConfig)
     p.setPollInterval(100)
     return p
+}
+
+export const createStreamCheckEventStream = () => {
+    return Kafka.createReadStream({ ...kafkaConfig, "group.id": "streamalive-notifier" }, { "enable.auto.commit": false }, { topics: [process.env.KAFKA_STREAMCHECK_TOPIC!] })
 }
 export const TOPIC_NAME_STREAM_CHECK_EVENT = process.env.KAFKA_STREAMCHECK_TOPIC || "streamcheck-testing"// process.env.CLOUDKARAFKA_TOPIC_PREFIX + "streamcheck"

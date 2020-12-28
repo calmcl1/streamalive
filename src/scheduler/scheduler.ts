@@ -1,16 +1,15 @@
-import AMQP from 'amqplib'
-import dotenv from 'dotenv'
-import schedule from 'node-schedule'
-import { initDB, models } from '../db'
 import { shouldUseDotEnv } from '../helpers'
-import { ADD_STREAM_QUEUE, STREAM_CHECK_TASK_QUEUE, REMOVE_STREAM_QUEUE } from '../queues'
-
 if (shouldUseDotEnv()) {
     console.log("Using dotenv file...")
+    const dotenv = require('dotenv')
     dotenv.config({ path: "'../../.env" })
 } else {
     console.log("Not using dotenv file...")
 }
+
+import AMQP from 'amqplib'
+import schedule from 'node-schedule'
+import { initDB, models } from '../db'
 
 const AMQP_SERVER = process.env.CLOUDAMQP_URL || process.env.RABBITMQ_URL || "amqp://localhost/streamalive"
 /**
@@ -30,7 +29,7 @@ async function initQueues() {
         .then(conn => conn.createChannel())
     chan.prefetch(2)
 
-    await Promise.all([STREAM_CHECK_TASK_QUEUE, ADD_STREAM_QUEUE, REMOVE_STREAM_QUEUE].map(q => chan.assertQueue(q, { durable: true, exclusive: false })))
+    await Promise.all([process.env.MQ_ADD_STREAM_QUEUE_NAME!, process.env.MQ_REMOVE_STREAM_QUEUE_NAME!, process.env.MQ_CHECK_STREAM_QUEUE_NAME!].map(q => chan.assertQueue(q, { durable: true, exclusive: false })))
 }
 
 async function onAddStreamMessage(message: AMQP.ConsumeMessage | null) {
@@ -70,13 +69,18 @@ async function onRemoveStreamMessage(message: AMQP.ConsumeMessage | null) {
 
 function addJobToList(stream_id: string, schedule_rule: schedule.RecurrenceRule) {
     const new_job = schedule.scheduleJob(schedule_rule, fireDate => {
-        const msg: CheckStreamMessage = { stream_id: stream_id }
-        console.info(`Checking stream ${stream_id}`)
-        chan.sendToQueue(STREAM_CHECK_TASK_QUEUE, Buffer.from(JSON.stringify(msg)))
+        sendStreamCheckMessage(stream_id)
     })
 
     jobs[stream_id] = new_job
+    sendStreamCheckMessage(stream_id)
     // console.info(`Added streamcheck job to list: ${stream_id}, ${schedule_rule}`)
+}
+
+function sendStreamCheckMessage(stream_id: string) {
+    const msg: CheckStreamMessage = { stream_id: stream_id }
+    console.info(`Checking stream ${stream_id}`)
+    chan.sendToQueue(process.env.MQ_CHECK_STREAM_QUEUE_NAME!, Buffer.from(JSON.stringify(msg)))
 }
 
 async function initJobs() {
@@ -90,9 +94,9 @@ async function initJobs() {
 }
 
 initDB()
-    .then(initJobs)
     .then(initQueues)
+    .then(initJobs)
     .then(() => {
-        chan.consume(ADD_STREAM_QUEUE, onAddStreamMessage, { noAck: false })
-        chan.consume(REMOVE_STREAM_QUEUE, onRemoveStreamMessage, { noAck: false })
+        chan.consume(process.env.MQ_ADD_STREAM_QUEUE_NAME!, onAddStreamMessage, { noAck: false })
+        chan.consume(process.env.MQ_REMOVE_STREAM_QUEUE_NAME!, onRemoveStreamMessage, { noAck: false })
     })

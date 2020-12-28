@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "start-clock": "node dist/scheduler/scheduler.js",
-    "start-worker": "node dist/worker/worker.js"
+    "start-worker": "node dist/worker/worker.js",
+    "start-notifier": "node dist/notifier/notifier.js"
   },
   "author": "Cal McLean <calmcl1@aol.com>",
   "license": "UNLICENCED",
