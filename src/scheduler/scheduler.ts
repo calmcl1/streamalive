@@ -22,7 +22,7 @@ let chan: AMQP.Channel
 
 const scheduleRules = {
     EVERY_HOUR: (() => { const s = new schedule.RecurrenceRule(); s.minute = 0; return s })(),
-    EVERY_MINUTE: (() => { const s = new schedule.RecurrenceRule(); s.second = [0, 30]; return s })()
+    EVERY_MINUTE: (() => { const s = new schedule.RecurrenceRule(); s.second = 0; return s })()
 }
 
 async function initQueues() {
