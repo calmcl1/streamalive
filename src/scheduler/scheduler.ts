@@ -22,7 +22,7 @@ let chan: AMQP.Channel
 
 const scheduleRules = {
     EVERY_HOUR: (() => { const s = new schedule.RecurrenceRule(); s.minute = 0; return s })(),
-    EVERY_MINUTE: (() => { const s = new schedule.RecurrenceRule(); s.second = 0; return s })()
+    EVERY_MINUTE: (() => { const s = new schedule.RecurrenceRule(); s.second = [0, 30]; return s })()
 }
 
 async function initQueues() {
@@ -46,8 +46,6 @@ async function onAddStreamMessage(message: AMQP.ConsumeMessage | null) {
     } finally {
         chan.ack(message)
     }
-
-
 }
 
 async function onRemoveStreamMessage(message: AMQP.ConsumeMessage | null) {
@@ -55,7 +53,7 @@ async function onRemoveStreamMessage(message: AMQP.ConsumeMessage | null) {
 
     try {
         const parsed_message: RemoveStreamMessage = JSON.parse(message.content.toString("utf-8"))
-        console.info(`Removing stream ${parsed_message.stream_id}`)
+        console.info(`Removing stream ${parsed_message.stream_id}; reason: ${parsed_message.reason}`)
 
         const stream = await models.Stream.findByPk(parsed_message.stream_id)
         if (stream) { stream.destroy() }
@@ -73,6 +71,7 @@ async function onRemoveStreamMessage(message: AMQP.ConsumeMessage | null) {
 function addJobToList(stream_id: string, schedule_rule: schedule.RecurrenceRule) {
     const new_job = schedule.scheduleJob(schedule_rule, fireDate => {
         const msg: CheckStreamMessage = { stream_id: stream_id }
+        console.info(`Checking stream ${stream_id}`)
         chan.sendToQueue(STREAM_CHECK_TASK_QUEUE, Buffer.from(JSON.stringify(msg)))
     })
 

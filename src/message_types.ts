@@ -10,4 +10,5 @@ interface CheckStreamMessage {
 
 interface RemoveStreamMessage {
     stream_id: string
+    reason: "ID_NOT_FOUND" | "USER_REQUEST"
 }
