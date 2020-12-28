@@ -40,6 +40,7 @@ async function onAddStreamMessage(message: AMQP.ConsumeMessage | null) {
         console.info(`Adding new stream: ${parsed_message.stream_url}`)
         const new_stream = await models.Stream.create({ user_id: parsed_message.user_id, url: parsed_message.stream_url, check_frequency: parsed_message.check_frequency })
         addJobToList(new_stream.id, scheduleRules.EVERY_MINUTE)
+        sendStreamCheckMessage(new_stream.id)
     } catch (e) {
         console.error(e)
     } finally {
@@ -73,7 +74,6 @@ function addJobToList(stream_id: string, schedule_rule: schedule.RecurrenceRule)
     })
 
     jobs[stream_id] = new_job
-    sendStreamCheckMessage(stream_id)
     // console.info(`Added streamcheck job to list: ${stream_id}, ${schedule_rule}`)
 }
 
