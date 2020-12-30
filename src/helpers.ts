@@ -13,3 +13,5 @@ export function shouldForceDBSync(): boolean {
 export function shouldUseDotEnv(): boolean {
     return fs.existsSync(join(__dirname, "..", ".env"))
 }
+
+export const shouldUseSendgridSandbox = () => process.env.IS_HEROKU && process.env.NODE_ENV == "production" ? false : true

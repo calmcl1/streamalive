@@ -1,11 +1,12 @@
-import { Model, DataTypes, Sequelize, BelongsToCreateAssociationMixin, BelongsToGetAssociationMixin, BelongsToSetAssociationMixin } from "sequelize"
-import { User } from "./user"
+import { DataTypes, HasManyAddAssociationMixin, HasManyAddAssociationsMixin, HasManyCountAssociationsMixin, HasManyCreateAssociationMixin, HasManyGetAssociationsMixin, HasManyHasAssociationMixin, HasManyHasAssociationsMixin, HasManyRemoveAssociationMixin, HasManyRemoveAssociationsMixin, HasManySetAssociationsMixin, Model, Sequelize } from "sequelize"
+import { StreamState } from "./stream_state"
 
 export interface StreamAttributes {
     id: string,
     user_id: string,
     url: string,
     check_frequency: "EVERY_HOUR" | "EVERY_MINUTE"
+    notify_type: "EMAIL" | "SMS"
 }
 
 export class Stream extends Model implements StreamAttributes {
@@ -16,18 +17,30 @@ export class Stream extends Model implements StreamAttributes {
     public user_id!: string
     public url!: string
     public check_frequency!: "EVERY_HOUR" | "EVERY_MINUTE"
+    public notify_type!: "EMAIL" | "SMS"
 
 
-    public CreateUser!: BelongsToCreateAssociationMixin<User>
-    public GetUser!: BelongsToGetAssociationMixin<User>
-    public SetUser!: BelongsToSetAssociationMixin<User, User['id']>
+    // public CreateUser!: BelongsToCreateAssociationMixin<User>
+    // public GetUser!: BelongsToGetAssociationMixin<User>
+    // public SetUser!: BelongsToSetAssociationMixin<User, User['id']>
+    public addStreamState!: HasManyAddAssociationMixin<StreamState, StreamState['id']>
+    public addStreamStates!: HasManyAddAssociationsMixin<StreamState, StreamState['id']>
+    public coundStreamState!: HasManyCountAssociationsMixin
+    public createStreamState!: HasManyCreateAssociationMixin<StreamState>
+    public getStreamStates!: HasManyGetAssociationsMixin<StreamState>
+    public hasStreamState!: HasManyHasAssociationMixin<StreamState, StreamState['id']>
+    public hasStreamStates!: HasManyHasAssociationsMixin<StreamState, StreamState['id']>
+    public removeStreamState!: HasManyRemoveAssociationMixin<StreamState, StreamState['id']>
+    public removeStreamStates!: HasManyRemoveAssociationsMixin<StreamState, StreamState['id']>
+    public setStreamStates!: HasManySetAssociationsMixin<StreamState, StreamState['id']>
 
     public static initModel(sequelize: Sequelize): Model<Stream, {}> {
         return this.init({
             id: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
-            user_id: { type: DataTypes.UUID, allowNull: false },
+            user_id: { type: DataTypes.STRING, allowNull: false },
             url: { type: DataTypes.STRING, allowNull: false },
-            check_frequency: { type: DataTypes.ENUM, values: ["EVERY_HOUR", "EVERY_MINUTE"], allowNull: false }
+            check_frequency: { type: DataTypes.ENUM, values: ["EVERY_HOUR", "EVERY_MINUTE"], allowNull: false },
+            notify_type: { type: DataTypes.ENUM, values: ["EMAIL", "SMS"], allowNull: false }
         }, {
             sequelize: sequelize,
             tableName: "streams"

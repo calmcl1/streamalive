@@ -13,6 +13,11 @@ interface RemoveStreamMessage {
     reason: "ID_NOT_FOUND" | "USER_REQUEST"
 }
 
+interface NotifyStreamStateMessage {
+    stream_id: string
+    stream_up: boolean
+}
+
 interface PollAudioStreamReturn {
     status_code: number
     body: string
