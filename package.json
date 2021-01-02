@@ -1,19 +1,21 @@
 {
   "name": "streamalive",
   "version": "1.0.0",
-  "description": "Double-check that Python version 3 and GPIOZero is installed:\r ```bash\r sudo apt install python3 python3-gpiozero\r ```",
+  "description": "",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
     "start-clock": "node dist/scheduler/scheduler.js",
     "start-worker": "node dist/worker/worker.js",
-    "start-notifier": "node dist/notifier/notifier.js"
+    "start-notifier": "node dist/notifier/notifier.js",
+    "start-api": "node dist/notifier/api.js"
   },
   "author": "Cal McLean <calmcl1@aol.com>",
   "license": "UNLICENCED",
   "devDependencies": {
     "@types/amqplib": "^0.5.16",
     "@types/auth0": "^2.20.12",
+    "@types/cors": "^2.8.9",
     "@types/node": "^14.14.16",
     "@types/node-schedule": "^1.3.1",
     "dotenv": "^8.2.0",
@@ -25,6 +27,11 @@
     "@sendgrid/mail": "^7.4.0",
     "amqplib": "^0.6.0",
     "auth0": "^2.31.0",
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "jose": "^3.5.0",
+    "json-api-serializer": "^2.6.0",
     "mysql2": "^2.2.5",
     "node-schedule": "^1.3.2",
     "sequelize": "^6.3.5"

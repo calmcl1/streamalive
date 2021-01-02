@@ -1,24 +1,27 @@
-interface AddStreamMessage {
-    stream_url: string,
-    user_id: string,
-    check_frequency: "EVERY_HOUR" | "EVERY_MINUTE"
+import { CHECK_FREQUENCY } from "./limits";
+
+export interface AddStreamMessage {
+    stream_id?: string
+    stream_url?: string,
+    user_id?: string,
+    check_frequency?: CHECK_FREQUENCY
 }
 
-interface CheckStreamMessage {
+export interface CheckStreamMessage {
     stream_id: string
 }
 
-interface RemoveStreamMessage {
+export interface RemoveStreamMessage {
     stream_id: string
     reason: "ID_NOT_FOUND" | "USER_REQUEST"
 }
 
-interface NotifyStreamStateMessage {
+export interface NotifyStreamStateMessage {
     stream_id: string
     stream_up: boolean
 }
 
-interface PollAudioStreamReturn {
+export interface PollAudioStreamReturn {
     status_code: number
     body: string
     stream_url: string

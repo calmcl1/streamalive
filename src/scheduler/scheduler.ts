@@ -10,7 +10,8 @@ if (shouldUseDotEnv()) {
 import AMQP from 'amqplib'
 import schedule from 'node-schedule'
 import { initDB, models } from '../db'
-import { StreamAttributes } from '../db/stream_entry'
+import { CHECK_FREQUENCY } from '../limits'
+import { AddStreamMessage, CheckStreamMessage, RemoveStreamMessage } from '../message_types'
 
 const AMQP_SERVER = process.env.CLOUDAMQP_URL || process.env.RABBITMQ_URL || "amqp://localhost/streamalive"
 /**
@@ -20,9 +21,10 @@ const jobs: { [key: string]: schedule.Job } = {}
 
 let chan: AMQP.Channel
 
-const scheduleRules: { [key in StreamAttributes['check_frequency']]: (from_date: Date) => schedule.RecurrenceRule } = {
+const scheduleRules: { [key in CHECK_FREQUENCY]: (from_date: Date) => schedule.RecurrenceRule } = {
     EVERY_HOUR: (from_date: Date) => { const s = new schedule.RecurrenceRule(); s.minute = from_date.getMinutes(); s.second = from_date.getSeconds(); return s },
-    EVERY_MINUTE: (from_date: Date) => { const s = new schedule.RecurrenceRule(); s.second = from_date.getSeconds(); return s }
+    EVERY_MINUTE: (from_date: Date) => { const s = new schedule.RecurrenceRule(); s.second = from_date.getSeconds(); return s },
+    CONTINUOUS: (_: Date) => { throw new Error(`Continuous checking cannot be scheduled via a recurring job`) }
 }
 
 async function initQueues() {
@@ -38,10 +40,18 @@ async function onAddStreamMessage(message: AMQP.ConsumeMessage | null) {
 
     try {
         const parsed_message: AddStreamMessage = JSON.parse(message.content.toString("utf-8"))
-        console.info(`Adding new stream: ${parsed_message.stream_url}`)
-        const new_stream = await models.Stream.create({ user_id: parsed_message.user_id, url: parsed_message.stream_url, check_frequency: parsed_message.check_frequency })
-        addJobToList(new_stream.id, scheduleRules[parsed_message.check_frequency](new_stream.createdAt))
-        sendStreamCheckMessage(new_stream.id)
+        if (parsed_message.stream_id) {
+            console.info(`Scheduling checks for existing stream: ${parsed_message.stream_id}`)
+            const stream = await models.Stream.findByPk(parsed_message.stream_id)
+            addJobToList(stream!.id, scheduleRules[stream!.check_frequency](stream!.createdAt))
+            sendStreamCheckMessage(stream!.id)
+        } else {
+            console.info(`Adding new stream: ${parsed_message.stream_url}`)
+            const new_stream = await models.Stream.create({ user_id: parsed_message.user_id, url: parsed_message.stream_url, check_frequency: parsed_message.check_frequency })
+            addJobToList(new_stream.id, scheduleRules[parsed_message.check_frequency!](new_stream.createdAt))
+            sendStreamCheckMessage(new_stream.id)
+        }
+
     } catch (e) {
         console.error(e)
     } finally {

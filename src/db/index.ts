@@ -1,4 +1,3 @@
-import { Console } from "console"
 import Sequelize from "sequelize"
 import { shouldForceDBSync } from "../helpers"
 import { Stream } from "./stream_entry"

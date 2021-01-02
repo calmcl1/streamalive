@@ -11,6 +11,7 @@ import { InvokeCommand, InvokeCommandOutput, LambdaClient } from '@aws-sdk/clien
 import { defaultProvider } from '@aws-sdk/credential-provider-node'
 import AMQP from 'amqplib'
 import { initDB, models, SequelizeStatic } from '../db'
+import { CheckStreamMessage, NotifyStreamStateMessage, PollAudioStreamReturn, RemoveStreamMessage } from '../message_types'
 // import { createStreamCheckEventProducer } from '../db/kafka'
 
 let messageQueueChan: AMQP.Channel

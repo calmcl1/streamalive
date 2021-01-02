@@ -11,6 +11,8 @@ import { initDB, models } from '../db'
 import auth0 from 'auth0'
 import AMQP from 'amqplib'
 import { StreamAttributes } from '../db/stream_entry'
+import { CHECK_FREQUENCY } from '../limits'
+import { NotifyStreamStateMessage } from '../message_types'
 // import { createStreamCheckEventStream } from '../db/kafka'
 
 let messageQueueChan: AMQP.Channel
@@ -50,9 +52,10 @@ const streamUpEmailData = {
     }
 }
 
-const streamCheckFrequencyHumanReadable: { [key in StreamAttributes['check_frequency']]: string } = {
+const streamCheckFrequencyHumanReadable: { [key in CHECK_FREQUENCY]: string } = {
     EVERY_HOUR: "every hour",
-    EVERY_MINUTE: "every minute"
+    EVERY_MINUTE: "every minute",
+    CONTINUOUS: "continuously"
 }
 
 async function onNotifyMessage(message: AMQP.ConsumeMessage | null) {
